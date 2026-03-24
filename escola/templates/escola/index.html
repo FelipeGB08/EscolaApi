@@ -1,0 +1,141 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+<head>
+    <meta charset="UTF-8">
+    <title>Escola API - Gestão Completa</title>
+    <style>
+        body { font-family: 'Segoe UI', sans-serif; background: #f0f2f5; padding: 40px; display: flex; justify-content: center; }
+        .container { width: 100%; max-width: 900px; background: white; padding: 30px; border-radius: 15px; box-shadow: 0 10px 30px rgba(0,0,0,0.1); }
+        h1 { color: #1a1a1a; margin-bottom: 25px; display: flex; align-items: center; justify-content: space-between; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .badge { background: #6c5ce7; color: white; padding: 6px 15px; border-radius: 30px; font-size: 0.6em; text-transform: uppercase; letter-spacing: 1px; }
+        
+        /* Formulário */
+        .form-group { display: grid; grid-template-columns: 1.5fr 1fr 1fr auto; gap: 12px; margin-bottom: 35px; background: #f8f9fa; padding: 20px; border-radius: 10px; border: 1px solid #e9ecef; }
+        input { padding: 12px; border: 2px solid #e0e0e0; border-radius: 8px; font-size: 14px; transition: 0.3s; }
+        input:focus { border-color: #6c5ce7; outline: none; box-shadow: 0 0 0 3px rgba(108, 92, 231, 0.1); }
+        
+        .btn-save { background: #00b894; color: white; border: none; padding: 12px 25px; border-radius: 8px; cursor: pointer; font-weight: 600; transition: 0.3s; }
+        .btn-save:hover { background: #00a082; transform: translateY(-1px); }
+
+        /* Tabela */
+        table { width: 100%; border-collapse: collapse; }
+        th { text-align: left; padding: 15px; color: #636e72; font-size: 0.85em; text-transform: uppercase; border-bottom: 2px solid #f1f1f1; }
+        td { padding: 15px; border-bottom: 1px solid #f8f9fa; color: #2d3436; }
+        tr:hover { background-color: #fffcf9; }
+
+        /* Botão Excluir */
+        .btn-delete { background: #ff7675; color: white; border: none; padding: 6px 12px; border-radius: 6px; cursor: pointer; font-size: 0.8em; transition: 0.2s; }
+        .btn-delete:hover { background: #d63031; }
+    </style>
+</head>
+<body>
+
+    <div class="container">
+        <h1>Gestão de Estudantes <span class="badge">API Ativa</span></h1>
+
+        <div class="form-group">
+            <input type="text" id="nome" placeholder="Nome Completo">
+            <input type="text" id="cpf" placeholder="CPF">
+            <input type="text" id="rg" placeholder="RG">
+            <button class="btn-save" onclick="salvarEstudante()">Adicionar</button>
+        </div>
+
+        <table id="tabela-estudantes">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>Nome</th>
+                    <th>CPF</th>
+                    <th>RG</th>
+                    <th style="text-align: right;">Ações</th>
+                </tr>
+            </thead>
+            <tbody></tbody>
+        </table>
+    </div>
+
+    <script>
+        function getCookie(name) {
+            let cookieValue = null;
+            if (document.cookie && document.cookie !== '') {
+                const cookies = document.cookie.split(';');
+                for (let i = 0; i < cookies.length; i++) {
+                    const cookie = cookies[i].trim();
+                    if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                        cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                        break;
+                    }
+                }
+            }
+            return cookieValue;
+        }
+
+        async function carregarEstudantes() {
+            const response = await fetch('/v1/estudantes/');
+            const dados = await response.json();
+            const tabela = document.querySelector('#tabela-estudantes tbody');
+            tabela.innerHTML = '';
+            
+            dados.results.forEach(estudante => {
+                tabela.innerHTML += `
+                    <tr>
+                        <td><strong>#${estudante.id}</strong></td>
+                        <td>${estudante.nome}</td>
+                        <td>${estudante.cpf}</td>
+                        <td>${estudante.rg}</td>
+                        <td style="text-align: right;">
+                            <button class="btn-delete" onclick="deletarEstudante(${estudante.id})">Excluir</button>
+                        </td>
+                    </tr>`;
+            });
+        }
+
+        async function salvarEstudante() {
+            const payload = {
+                nome: document.getElementById('nome').value,
+                cpf: document.getElementById('cpf').value,
+                rg: document.getElementById('rg').value,
+                data_nascimento: "2000-01-01" 
+            };
+
+            const response = await fetch('/v1/estudantes/', {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                    'X-CSRFToken': getCookie('csrftoken')
+                },
+                body: JSON.stringify(payload)
+            });
+
+            if (response.ok) {
+                document.getElementById('nome').value = '';
+                document.getElementById('cpf').value = '';
+                document.getElementById('rg').value = '';
+                carregarEstudantes();
+            } else {
+                const erro = await response.json();
+                alert("Erro na API: " + JSON.stringify(erro));
+            }
+        }
+
+        async function deletarEstudante(id) {
+            if (!confirm(`Tem certeza que deseja excluir o estudante #${id}?`)) return;
+
+            const response = await fetch(`/v1/estudantes/${id}/`, {
+                method: 'DELETE',
+                headers: {
+                    'X-CSRFToken': getCookie('csrftoken')
+                }
+            });
+
+            if (response.ok) {
+                carregarEstudantes();
+            } else {
+                alert("Erro ao excluir.");
+            }
+        }
+
+        carregarEstudantes();
+    </script>
+</body>
+</html>

@@ -2,8 +2,8 @@ from django.db import models
 
 class Estudante(models.Model):
     nome = models.CharField(max_length=100)
-    cpf = models.CharField(max_length=11, unique=True)
     rg = models.CharField(max_length=9)
+    cpf = models.CharField(max_length=11, unique=True)
     data_nascimento = models.DateField()
 
     def __str__(self):
@@ -13,7 +13,7 @@ class Curso(models.Model):
     NIVEL = (
         ('B', 'Básico'),
         ('I', 'Intermediário'),
-        ('A', 'Avançado')
+        ('A', 'Avançado'),
     )
     codigo_curso = models.CharField(max_length=10, unique=True)
     descricao = models.CharField(max_length=100)
@@ -26,7 +26,7 @@ class Matricula(models.Model):
     PERIODO = (
         ('M', 'Matutino'),
         ('V', 'Vespertino'),
-        ('N', 'Noturno')
+        ('N', 'Noturno'),
     )
     estudante = models.ForeignKey(Estudante, on_delete=models.CASCADE)
     curso = models.ForeignKey(Curso, on_delete=models.CASCADE)
